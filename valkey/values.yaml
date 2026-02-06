@@ -275,10 +275,10 @@ replica:
     quorum: 2
 
     # Time in milliseconds before sentinel considers an instance down
-    downAfterMilliseconds: 30000
+    downAfterMilliseconds: 5000
 
     # Timeout for failover operation in milliseconds
-    failoverTimeout: 180000
+    failoverTimeout: 10000
 
     # Number of replicas to reconfigure in parallel after failover
     parallelSyncs: 1
@@ -545,8 +545,27 @@ haproxy:
     #   cpu: 100m
     #   memory: 128Mi
   config:
-    checkInterval: 1s
+    checkInterval: 2s
     timeout:
       connect: 5s
       client: 1m
       server: 1m
+
+  # Sentinel watcher sidecar: queries Sentinel for master changes and updates HAProxy
+  # backend state via HAProxy's runtime socket, enabling near-instant failover.
+  # Only deployed when replica.sentinel.enabled is true.
+  sentinelWatcher:
+    # Uses valkey/valkey alpine image which ships valkey-cli and busybox nc.
+    # Busybox nc supports -U (unix domain sockets) so no extra tools are needed.
+    image:
+      registry: docker.io
+      repository: valkey/valkey
+      tag: "8.1-alpine"
+      pullPolicy: IfNotPresent
+    resources: {}
+      # limits:
+      #   cpu: 50m
+      #   memory: 32Mi
+      # requests:
+      #   cpu: 10m
+      #   memory: 16Mi
