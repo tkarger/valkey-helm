@@ -255,9 +255,6 @@ replica:
     # Enable Sentinel for high availability and automatic failover
     enabled: false
 
-    # Number of sentinel instances (minimum 3 recommended for proper quorum)
-    replicas: 3
-
     # Port on which sentinel will listen
     port: 26379
 
@@ -519,3 +516,29 @@ metrics:
     #   for: 1s
     #   labels:
     #     severity: error
+
+haproxy:
+  enabled: false
+  image:
+    registry: docker.io
+    repository: haproxy
+    tag: 2.9
+    pullPolicy: IfNotPresent
+  replicas: 3
+  service:
+    type: ClusterIP
+    port: 6379
+    annotations: {}
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  config:
+    checkInterval: 1s
+    timeout:
+      connect: 5s
+      client: 1m
+      server: 1m

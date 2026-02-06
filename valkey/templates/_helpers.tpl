@@ -196,8 +196,8 @@ Validate sentinel configuration
   {{- if not .Values.replica.enabled }}
     {{- fail "Sentinel mode requires replication to be enabled. Please set replica.enabled=true along with sentinel.enabled=true" }}
   {{- end }}
-  {{- if lt (int .Values.replica.sentinel.replicas) 1 }}
-    {{- fail "Sentinel requires at least 1 replica. Recommend 3 or more for proper quorum." }}
+  {{- if lt (add (int .Values.replica.replicas) 1) 3 }}
+    {{- fail "Sentinel mode requires at least 3 Valkey pods (replicas: 2) for a stable quorum." }}
   {{- end }}
   {{- if and .Values.auth.enabled (not (hasKey .Values.auth.aclUsers .Values.replica.replicationUser)) }}
     {{- fail (printf "Sentinel with auth requires replication user '%s' to be defined in auth.aclUsers" .Values.replica.replicationUser) }}
