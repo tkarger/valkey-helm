@@ -216,7 +216,7 @@ spec:
             {{- if .Values.auth.enabled }}
             - name: valkey-acl
               mountPath: /etc/valkey
-            {{- if and .Values.auth.injectSecret.enabled }}
+            {{- if .Values.auth.injectSecret.enabled }}
               {{ $dir := regexReplaceAll "/[^/]+$" .Values.auth.injectSecret.mountPath "/" }}
             - name: inject-secret
               mountPath: "{{ $dir }}"
