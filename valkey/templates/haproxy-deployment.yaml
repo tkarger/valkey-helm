@@ -15,12 +15,33 @@ spec:
   template:
     metadata:
       annotations:
+        {{- include "renderTplValues" (dict "value" .Values.podAnnotations "indent" 8 "root" $ ) }}
         checksum/config: {{ include (print $.Template.BasePath "/haproxy-configmap.yaml") . | sha256sum }}
       labels:
         {{- include "valkey.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: haproxy
     spec:
       {{- (include "valkey.imagePullSecrets" .) | nindent 6 }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      serviceAccountName: {{ include "valkey.serviceAccountName" . }}
+      {{- if .Values.tls.enabled }}
+      initContainers:
+        - name: build-haproxy-pem
+          image: "{{ .Values.haproxy.sentinelWatcher.image.registry }}/{{ .Values.haproxy.sentinelWatcher.image.repository }}:{{ tpl .Values.haproxy.sentinelWatcher.image.tag $ }}"
+          command:
+            - sh
+            - -c
+            - |
+              awk '1; END{print ""}' /tls/tls.crt > /output/server.pem
+              awk '1; END{print ""}' /tls/tls.key >> /output/server.pem
+          volumeMounts:
+            - name: output
+              mountPath: /output
+            {{- if .Values.tls.enabled }}
+            - name: {{ include "valkey.fullname" . }}-tls
+              mountPath: /tls
+            {{- end }}
+      {{- end }}
       containers:
         - name: haproxy
           {{- if .Values.haproxy.image.registry }}
@@ -42,6 +63,12 @@ spec:
               subPath: haproxy.cfg
             - name: haproxy-socket
               mountPath: /var/run/haproxy
+            {{- if .Values.tls.enabled }}
+            - name: {{ include "valkey.fullname" . }}-tls
+              mountPath: /tls
+            {{- end }}
+            - name: output
+              mountPath: /output
           resources:
             {{- toYaml .Values.haproxy.resources | nindent 12 }}
           securityContext:
@@ -71,11 +98,21 @@ spec:
             - name: valkey-users-secret
               mountPath: /valkey-users-secret
               readOnly: true
-            {{- else }}
+            {{- end }}
+            {{- if or (include "valkey.hasInlinePasswords" . | eq "true") .Values.auth.aclConfig }}
             - name: valkey-auth-secret
               mountPath: /valkey-auth-secret
               readOnly: true
             {{- end }}
+            {{- if .Values.auth.injectSecret.enabled }}
+              {{ $dir := regexReplaceAll "/[^/]+$" .Values.auth.injectSecret.mountPath "/" }}
+            - name: inject-secret
+              mountPath: "{{ $dir }}"
+            {{- end }}
+            {{- end }}
+            {{- if .Values.tls.enabled }}
+            - name: {{ include "valkey.fullname" . }}-tls
+              mountPath: /tls
             {{- end }}
           resources:
             {{- toYaml .Values.haproxy.sentinelWatcher.resources | nindent 12 }}
@@ -88,6 +125,12 @@ spec:
           configMap:
             name: {{ include "valkey.fullname" . }}-haproxy
             defaultMode: 0755
+        {{- if .Values.tls.enabled }}
+        - name: {{ include "valkey.fullname" . }}-tls
+          secret:
+            secretName: {{ required "An existing secret is required to enable TLS" .Values.tls.existingSecret }}
+            defaultMode: 0400
+        {{- end }}
         - name: haproxy-socket
           emptyDir: {}
         {{- if and .Values.replica.sentinel.enabled .Values.auth.enabled }}
@@ -95,10 +138,18 @@ spec:
         - name: valkey-users-secret
           secret:
             secretName: {{ .Values.auth.usersExistingSecret }}
-        {{- else }}
+        {{- end }}
+        {{- if or (include "valkey.hasInlinePasswords" . | eq "true") .Values.auth.aclConfig }}
         - name: valkey-auth-secret
           secret:
             secretName: {{ include "valkey.fullname" . }}-auth
+            defaultMode: 0400
+        {{- end }}
+        {{- if .Values.auth.injectSecret.enabled }}
+        - name: inject-secret
+          emptyDir: {}
         {{- end }}
         {{- end }}
+        - name: output
+          emptyDir: {}
 {{- end }}

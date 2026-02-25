@@ -91,14 +91,20 @@ data:
 
     {{- if .Values.auth.enabled }}
     # Configure authentication for sentinel to connect to master/replicas
-    {{- $replUsername := .Values.replica.replicationUser }}
+    {{- $replUsername := ""}}
+    {{- if .Values.auth.injectSecret.enabled }}
+    {{- $replUsername = .Values.auth.injectSecret.username }}
+    AUTH_PASSWORD=$(cat {{ .Values.auth.injectSecret.mountPath }})
+    {{- else }}
     {{- $replUser := index .Values.auth.aclUsers $replUsername }}
     {{- $replPasswordKey := $replUser.passwordKey | default $replUsername }}
     AUTH_PASSWORD=$(get_user_password "{{ $replUsername }}" "{{ $replPasswordKey }}") || exit 1
+    {{- end }}
 
     cat >> "$SENTINEL_CONF" << EOF
 
     # Authentication configuration
+    sentinel auth-user ${MASTER_SET} default
     sentinel auth-pass ${MASTER_SET} ${AUTH_PASSWORD}
     EOF
 

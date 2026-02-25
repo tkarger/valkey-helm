@@ -162,6 +162,9 @@ extraVolumes: []
 extraVolumeMounts: []
 #  - mountPath: /some/path/
 #    name: hostpath-volume
+extraInitVolumeMounts: []
+#  - mountPath: /some/path/
+#    name: hostpath-volume
 
 # Content for valkey.conf (will be mounted via ConfigMap)
 valkeyConfig: ""

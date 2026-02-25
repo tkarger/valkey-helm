@@ -139,14 +139,14 @@ Validate auth configuration
   {{- end }}
   {{- if .Values.auth.aclUsers }}
     {{- $hasUsersExistingSecret := .Values.auth.usersExistingSecret }}
-    {{- if not (hasKey .Values.auth.aclUsers "default") }}
+    {{- if and (not (hasKey .Values.auth.aclUsers "default")) (not .Values.auth.injectSecret.enabled)}}
       {{- fail "The 'default' user must be defined in auth.aclUsers when authentication is enabled. Without it, anyone can access the database without credentials." }}
     {{- end }}
     {{- range $username, $user := .Values.auth.aclUsers }}
       {{- if not $user.permissions }}
         {{- fail (printf "User '%s' in auth.aclUsers must have a 'permissions' field" $username) }}
       {{- end }}
-      {{- if not (or $user.password $hasUsersExistingSecret) }}
+      {{- if not (or $user.password $hasUsersExistingSecret $.Values.auth.injectSecret.enabled) }}
         {{- fail (printf "User '%s' must have either 'password' field or auth.usersExistingSecret must be set" $username) }}
       {{- end }}
       {{- if and $user.passwordKey (not $hasUsersExistingSecret) }}
