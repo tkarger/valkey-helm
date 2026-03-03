@@ -106,8 +106,7 @@ spec:
               mountPath: "{{ $dir }}"
             {{- end }}
             {{- end }}
-            {{- include "renderTplValues" (dict "value" .Values.extraInitVolumeMounts
-             "indent" 12 "root" $ ) }}
+            {{- include "renderTplValues" (dict "value" .Values.extraInitVolumeMounts "indent" 12 "root" $ ) }}
           resources:
             {{- include "renderTplValues" (dict "value" .Values.initResources "indent" 12 "root" $ ) }}
         {{- if .Values.replica.sentinel.enabled }}
@@ -232,7 +231,7 @@ spec:
           command: [ "valkey-sentinel" ]
           args: [ "/sentinel-data/sentinel.conf" ]
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- include "renderTplValues" (dict "value" .Values.securityContext "indent" 12 "root" $ ) }}
           env:
             - name: POD_IP
               valueFrom:
