@@ -80,9 +80,7 @@ spec:
               mountPath: "{{ $dir }}"
             {{- end }}
             {{- end }}
-            {{- with .Values.extraVolumeMounts }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
+            {{- include "renderTplValues" (dict "value" .Values.extraInitVolumeMounts "indent" 12 "root" $ ) }}
           resources:
             {{- include "renderTplValues" (dict "value" .Values.initResources "indent" 12 "root" $ ) }}
       {{- include "renderTplValues" (dict "value" .Values.extraInitContainers "indent" 8 "root" $ ) }}
@@ -167,10 +165,12 @@ spec:
             - name: metrics
               containerPort: {{ .Values.metrics.exporter.port }}
           startupProbe:
-            tcpSocket:
+            httpGet:
+              path: /
               port: metrics
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /
               port: metrics
           readinessProbe:
             httpGet:
