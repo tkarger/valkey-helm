@@ -125,7 +125,8 @@ data:
 
     # Extract server index from a hostname like "valkey-1.valkey-headless..."
     index_from_host() {
-      echo "$1" | grep -oE 'valkey-[0-9]+' | grep -oE '[0-9]+' | head -1
+      local host="${1%%.*}"
+      echo "${host##*-}"
     }
 
     wait_for_socket() {
