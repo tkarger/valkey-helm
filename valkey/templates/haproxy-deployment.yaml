@@ -24,25 +24,9 @@ spec:
       {{- (include "valkey.imagePullSecrets" .) | nindent 6 }}
       automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
       serviceAccountName: {{ include "valkey.serviceAccountName" . }}
-      {{- if .Values.tls.enabled }}
+      {{- with .Values.haproxy.extraInitContainers }}
       initContainers:
-        - name: build-haproxy-pem
-          image: "{{ .Values.haproxy.sentinelWatcher.image.registry }}/{{ .Values.haproxy.sentinelWatcher.image.repository }}:{{ tpl .Values.haproxy.sentinelWatcher.image.tag $ }}"
-          command:
-            - sh
-            - -c
-            - |
-              awk '1; END{print ""}' /tls/tls.crt > /output/server.pem
-              awk '1; END{print ""}' /tls/tls.key >> /output/server.pem
-          volumeMounts:
-            - name: output
-              mountPath: /output
-            {{- if .Values.tls.enabled }}
-            - name: {{ include "valkey.fullname" . }}-tls
-              mountPath: /tls
-            {{- end }}
-          resources:
-            {{- include "renderTplValues" (dict "value" .Values.initResources "indent" 12 "root" $ ) }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: haproxy
