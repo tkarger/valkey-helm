@@ -41,6 +41,8 @@ spec:
             - name: {{ include "valkey.fullname" . }}-tls
               mountPath: /tls
             {{- end }}
+          resources:
+            {{- include "renderTplValues" (dict "value" .Values.initResources "indent" 12 "root" $ ) }}
       {{- end }}
       containers:
         - name: haproxy
