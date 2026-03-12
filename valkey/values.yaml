@@ -568,6 +568,8 @@ haproxy:
       server: 1m
   securityContext: {}
   extraInitContainers: []
+  extraVolumeMounts: []
+  extraVolumes: []
   
   # Sentinel watcher sidecar: queries Sentinel for master changes and updates HAProxy
   # backend state via HAProxy's runtime socket, enabling near-instant failover.

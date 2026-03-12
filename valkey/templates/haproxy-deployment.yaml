@@ -53,8 +53,9 @@ spec:
             - name: {{ include "valkey.fullname" . }}-tls
               mountPath: /tls
             {{- end }}
-            - name: output
-              mountPath: /output
+            {{- with .Values.haproxy.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           resources:
             {{- toYaml .Values.haproxy.resources | nindent 12 }}
           securityContext:
@@ -136,6 +137,7 @@ spec:
           emptyDir: {}
         {{- end }}
         {{- end }}
-        - name: output
-          emptyDir: {}
+        {{- with .Values.haproxy.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
 {{- end }}
